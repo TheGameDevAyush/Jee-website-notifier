@@ -14,25 +14,15 @@ jobs:
       - name: Send event to relay webhook
         env:
           WEBHOOK_URL: https://soft-cloud-7e79.gamerzayush62.workers.dev/
+        
         run: |
-          # Build JSON payload with more event info
-          EVENT_DATA=$(jq -n \
-            --arg name "$GITHUB_EVENT_NAME" \
-            --arg repo "$GITHUB_REPOSITORY" \
-            --arg actor "$GITHUB_ACTOR" \
-            --arg ref "$GITHUB_REF" \
-            --arg sha "$GITHUB_SHA" \
-            --arg url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" \
-            '{
-              event: $name,
-              repository: $repo,
-              actor: $actor,
-              ref: $ref,
-              sha: $sha,
-              url: $url
-            }'
-          )
-          echo "Sending payload: $EVENT_DATA"
-          curl -X POST -H "Content-Type: application/json" \
-               -d "$EVENT_DATA" \
-               "$WEBHOOK_URL"
+           PAYLOAD=$(jq -n \
+           --argjson commits "$(jq .commits "$GITHUB_EVENT_PATH")" \
+           --arg pusher "$(jq -r .pusher.name "$GITHUB_EVENT_PATH")" \
+           --arg repo "$GITHUB_REPOSITORY" \
+           --arg ref "$GITHUB_REF" \
+           --arg actor "$GITHUB_ACTOR" \
+           '{event:"push", repository:$repo, ref:$ref, actor:$actor, pusher:$pusher, commits:$commits}')
+            curl -X POST -H "Content-Type: application/json" \
+            -d "$PAYLOAD" \
+            "$WEBHOOK_URL"
