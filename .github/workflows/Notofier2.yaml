@@ -1,1 +1,19 @@
 
+name: GitHub to Discord
+
+on:
+  push:
+  pull_request:
+  issues:
+  release:
+    types: [published]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Discord
+        run: |
+          curl -X POST -H "Content-Type: application/json" \
+          -d "{\"content\": \"📌 Event: $GITHUB_EVENT_NAME\n🔧 Repo: $GITHUB_REPOSITORY\n👤 By: $GITHUB_ACTOR\"}" \
+          "https://discord.com/api/webhooks/1443205846766194710/VeSmRp_--onGIwlgNZhXS3Apwh3VRNDnQPLSukQi_MP4Pjx0yV1nf_DbjkvtxwA7_jp4"
