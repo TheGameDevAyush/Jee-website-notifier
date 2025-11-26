@@ -1,5 +1,4 @@
-
-name: GitHub to Discord
+name: GitHub to Discord Relay
 
 on:
   push:
@@ -12,8 +11,28 @@ jobs:
   notify:
     runs-on: ubuntu-latest
     steps:
-      - name: Notify Discord
+      - name: Send event to relay webhook
+        env:
+          WEBHOOK_URL: https://soft-cloud-7e79.gamerzayush62.workers.dev/
         run: |
+          # Build JSON payload with more event info
+          EVENT_DATA=$(jq -n \
+            --arg name "$GITHUB_EVENT_NAME" \
+            --arg repo "$GITHUB_REPOSITORY" \
+            --arg actor "$GITHUB_ACTOR" \
+            --arg ref "$GITHUB_REF" \
+            --arg sha "$GITHUB_SHA" \
+            --arg url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" \
+            '{
+              event: $name,
+              repository: $repo,
+              actor: $actor,
+              ref: $ref,
+              sha: $sha,
+              url: $url
+            }'
+          )
+          echo "Sending payload: $EVENT_DATA"
           curl -X POST -H "Content-Type: application/json" \
-          -d "{\"content\": \"📌 Event: $GITHUB_EVENT_NAME\n🔧 Repo: $GITHUB_REPOSITORY\n👤 By: $GITHUB_ACTOR\"}" \
-          "https://discord.com/api/webhooks/1443205846766194710/VeSmRp_--onGIwlgNZhXS3Apwh3VRNDnQPLSukQi_MP4Pjx0yV1nf_DbjkvtxwA7_jp4"
+               -d "$EVENT_DATA" \
+               "$WEBHOOK_URL"
